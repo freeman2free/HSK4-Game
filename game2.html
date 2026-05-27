@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSK4 单词闪卡挑战 - 第二部分</title>
+    <style>
+        :root {
+            --primary: #20c997; /* 换了一个主题色以区分上一个游戏 */
+            --bg-color: #f0f8f5;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #888888;
+            --correct: #4CAF50;
+            --wrong: #F44336;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Microsoft YaHei';
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+        }
+        .game-container {
+            background-color: var(--card-bg);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        h1 {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .flashcard {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: #1a5c38;
+            padding: 40px 20px;
+            border-radius: 15px;
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            word-break: break-word;
+        }
+        .mode-hint {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .option-btn {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-main);
+            font-family: inherit;
+            word-break: break-word;
+        }
+        .option-btn:hover:not(:disabled) {
+            background-color: #e2e6ea;
+            border-color: #dae0e5;
+            transform: translateY(-2px);
+        }
+        .option-btn:disabled {
+            cursor: default;
+        }
+        .option-btn.correct {
+            background-color: var(--correct);
+            border-color: var(--correct);
+            color: white;
+        }
+        .option-btn.wrong {
+            background-color: var(--wrong);
+            border-color: var(--wrong);
+            color: white;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 15px;
+        }
+        .btn-nav {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .btn-prev {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .btn-prev:hover:not(:disabled) {
+            background-color: #dee2e6;
+        }
+        .btn-next {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-next:hover {
+            background-color: #1aa179;
+        }
+        .btn-nav:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #1aa179;
+        }
+        .result-score {
+            font-size: 48px;
+            color: var(--primary);
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="start-screen" class="screen active">
+        <h1>HSK4 单词挑战 (二)</h1>
+        <p>生活、购物与情感词汇</p>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 20px;">
+            系统已从130词库中为你随机抽取30题<br>前15题：俄译中<br>后15题：中译俄<br><br>
+            (可手动翻页，不限答题时间)
+        </p>
+        <button class="btn-primary" onclick="startGame()">开始游戏</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="status-bar">
+            <span id="progress-text">进度: 1/30</span>
+            <span id="score-text">得分: 0</span>
+        </div>
+        <div class="flashcard">
+            <div id="mode-hint" class="mode-hint">请选择对应的中文</div>
+            <div id="question-word">Загрузка...</div>
+        </div>
+        <div class="options-grid" id="options-container">
+        </div>
+        
+        <div class="nav-container">
+            <button id="btn-prev" class="btn-nav btn-prev" onclick="prevQuestion()">上一个</button>
+            <button id="btn-next" class="btn-nav btn-next" onclick="nextQuestion()">下一个</button>
+        </div>
+    </div>
+
+    <div id="end-screen" class="screen">
+        <h1>挑战结束！</h1>
+        <div class="result-score" id="final-score">0/30</div>
+        <p id="result-message">太棒了！</p>
+        <button class="btn-primary" onclick="startGame()">再玩一次</button>
+    </div>
+</div>
+
+<script>
+    // 全新的词汇库
+    const vocabDB = [
+        { zh: "家具", ru: "мебель" }, { zh: "沙发", ru: "диван" },
+        { zh: "打折", ru: "делать скидку" }, { zh: "价格", ru: "цена" },
+        { zh: "质量", ru: "качество" }, { zh: "肯定", ru: "несомненно / утверждать" },
+        { zh: "流行", ru: "популярный" }, { zh: "顺便", ru: "попутно / заодно" },
+        { zh: "台", ru: "сч. слово для техники" }, { zh: "光", ru: "только / свет" },
+        { zh: "实在", ru: "действительно / честный" }, { zh: "制冷", ru: "охлаждать" },
+        { zh: "效果", ru: "эффект" }, { zh: "现金", ru: "наличные" },
+        { zh: "邀请", ru: "приглашать" }, { zh: "葡萄", ru: "виноград" },
+        { zh: "艺术", ru: "искусство" }, { zh: "广告", ru: "реклама" },
+        { zh: "味道", ru: "вкус / запах" }, { zh: "优点", ru: "достоинство / плюс" },
+        { zh: "实际", ru: "реальный / на самом деле" }, { zh: "考虑到", ru: "учитывать" },
+        { zh: "标准", ru: "стандарт" }, { zh: "样子", ru: "вид / фасон" },
+        { zh: "年龄", ru: "возраст" }, { zh: "浪费", ru: "тратить впустую" },
+        { zh: "购物", ru: "делать покупки" }, { zh: "尤其", ru: "особенно" },
+        { zh: "受到", ru: "получать / подвергаться" }, { zh: "任何", ru: "любой" },
+        { zh: "寄", ru: "отправлять" }, { zh: "再说", ru: "к тому же" },
+        { zh: "对……来说", ru: "что касается..." }, { zh: "特别", ru: "особенно / особый" },
+        { zh: "果汁", ru: "сок" }, { zh: "袜子", ru: "носки" },
+        { zh: "售货员", ru: "продавец" }, { zh: "打扰", ru: "беспокоить" },
+        { zh: "竟然", ru: "неожиданно" }, { zh: "西红柿", ru: "помидор" },
+        { zh: "百分之", ru: "процент" }, { zh: "倍", ru: "раз / крат" },
+        { zh: "皮肤", ru: "кожа" }, { zh: "好处", ru: "польза" },
+        { zh: "尝", ru: "пробовать на вкус" }, { zh: "轻", ru: "легкий" },
+        { zh: "方面", ru: "сторона / аспект" }, { zh: "值得", ru: "заслуживать / стоить" },
+        { zh: "活动", ru: "мероприятие" }, { zh: "内", ru: "внутри / в пределах" },
+        { zh: "免费", ru: "бесплатно" }, { zh: "修理", ru: "ремонтировать" },
+        { zh: "支持", ru: "поддерживать" }, { zh: "举行", ru: "проводить" },
+        { zh: "满", ru: "полный" }, { zh: "其中", ru: "среди них" },
+        { zh: "小说", ru: "роман / повесть" }, { zh: "会员卡", ru: "членская карта" },
+        { zh: "所有", ru: "все" }, { zh: "获得", ru: "получать" },
+        { zh: "情况", ru: "ситуация" }, { zh: "例如", ru: "например" },
+        { zh: "举办", ru: "организовывать" }, { zh: "各", ru: "каждый / всякий" },
+        { zh: "降低", ru: "снижать" }, { zh: "流血", ru: "кровоточить" },
+        { zh: "擦", ru: "вытирать" }, { zh: "气候", ru: "климат" },
+        { zh: "估计", ru: "предполагать" }, { zh: "咳嗽", ru: "кашлять" },
+        { zh: "严重", ru: "серьезный" }, { zh: "窗户", ru: "окно" },
+        { zh: "空气", ru: "воздух" }, { zh: "抽烟", ru: "курить" },
+        { zh: "动作", ru: "движение" }, { zh: "帅", ru: "красивый (о мужчине)" },
+        { zh: "出现", ru: "появляться" }, { zh: "后悔", ru: "сожалеть" },
+        { zh: "来不及", ru: "не успевать" }, { zh: "反对", ru: "возражать" },
+        { zh: "大夫", ru: "врач" }, { zh: "植物", ru: "растение" },
+        { zh: "研究", ru: "исследовать" }, { zh: "研究生", ru: "аспирант / магистрант" },
+        { zh: "超过", ru: "превышать" }, { zh: "散步", ru: "гулять" },
+        { zh: "指", ru: "указывать / иметь в виду" }, { zh: "精神", ru: "дух / энергия" },
+        { zh: "教授", ru: "профессор" }, { zh: "数字", ru: "цифра / число" },
+        { zh: "说明", ru: "объяснять" }, { zh: "要是", ru: "если" },
+        { zh: "既", ru: "уж если / поскольку" }, { zh: "减肥", ru: "худеть" },
+        { zh: "辛苦", ru: "тяжелый / трудиться" }, { zh: "肚子", ru: "живот" },
+        { zh: "感情", ru: "чувство / эмоция" }, { zh: "烦恼", ru: "беспокойство" },
+        { zh: "掉", ru: "падать / терять" }, { zh: "巧克力", ru: "шоколад" },
+        { zh: "亲戚", ru: "родственник" }, { zh: "伤心", ru: "грустить" },
+        { zh: "使", ru: "заставлять" }, { zh: "尤其是", ru: "в особенности" },
+        { zh: "心情", ru: "настроение" }, { zh: "愉快", ru: "радостный" },
+        { zh: "景色", ru: "пейзаж" }, { zh: "轻松", ru: "расслабленный / легкий" },
+        { zh: "压力", ru: "стресс / давление" }, { zh: "回忆", ru: "вспоминать" },
+        { zh: "发生", ru: "происходить" }, { zh: "成为", ru: "становиться" },
+        { zh: "只要", ru: "если только" }, { zh: "过去的就让它成为过去吧", ru: "пусть прошлое останется в прошлом" },
+        { zh: "师傅", ru: "мастер" }, { zh: "大使馆", ru: "посольство" },
+        { zh: "堵车", ru: "пробка" }, { zh: "距离", ru: "расстояние" },
+        { zh: "耐心", ru: "терпение" }, { zh: "生命", ru: "жизнь" },
+        { zh: "缺少", ru: "не хватать" }, { zh: "到处", ru: "везде" },
+        { zh: "态度", ru: "отношение" }, { zh: "因此", ru: "поэтому" },
+        { zh: "科学证明", ru: "научно доказано" }, { zh: "往往", ru: "часто" },
+        { zh: "阳光", ru: "солнечный свет" }, { zh: "积极", ru: "активный / позитивный" },
+        { zh: "特点", ru: "особенность" }
+    ];
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    const totalQuestions = 30;
+
+    function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+
+        score = 0;
+        currentIndex = 0;
+        currentQuestions = [];
+
+        const shuffledVocab = shuffleArray(vocabDB);
+        const selectedVocab = shuffledVocab.slice(0, totalQuestions);
+
+        for (let i = 0; i < totalQuestions; i++) {
+            const wordObj = selectedVocab[i];
+            const isRuToZh = i < (totalQuestions / 2);
+            
+            const questionText = isRuToZh ? wordObj.ru : wordObj.zh;
+            const correctAnswer = isRuToZh ? wordObj.zh : wordObj.ru;
+            
+            let wrongOptions = vocabDB.filter(v => v.zh !== wordObj.zh);
+            wrongOptions = shuffleArray(wrongOptions).slice(0, 3);
+            const wrongAnswers = wrongOptions.map(v => isRuToZh ? v.zh : v.ru);
+            
+            let options = [correctAnswer, ...wrongAnswers];
+            options = shuffleArray(options);
+
+            currentQuestions.push({
+                question: questionText,
+                options: options,
+                correct: correctAnswer,
+                type: isRuToZh ? 'ru-zh' : 'zh-ru',
+                userAnswer: null
+            });
+        }
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = currentQuestions[currentIndex];
+        document.getElementById('progress-text').innerText = `进度: ${currentIndex + 1}/${totalQuestions}`;
+        document.getElementById('score-text').innerText = `得分: ${score}`;
+        document.getElementById('mode-hint').innerText = q.type === 'ru-zh' ? '请选择对应的中文' : '请选择对应的俄语';
+        document.getElementById('question-word').innerText = q.question;
+        
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            
+            if (q.userAnswer !== null) {
+                btn.disabled = true;
+                if (opt === q.correct) {
+                    btn.classList.add('correct');
+                } else if (opt === q.userAnswer) {
+                    btn.classList.add('wrong');
+                }
+            } else {
+                btn.onclick = () => checkAnswer(btn, opt, q.correct);
+            }
+            
+            optionsContainer.appendChild(btn);
+        });
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        
+        btnPrev.disabled = (currentIndex === 0);
+        
+        if (currentIndex === totalQuestions - 1) {
+            btnNext.innerText = "完成挑战";
+        } else {
+            btnNext.innerText = "下一个";
+        }
+    }
+
+    function checkAnswer(btn, selectedOpt, correctOpt) {
+        const q = currentQuestions[currentIndex];
+        q.userAnswer = selectedOpt;
+        
+        const buttons = document.querySelectorAll('.option-btn');
+        buttons.forEach(b => b.disabled = true);
+
+        if (selectedOpt === correctOpt) {
+            btn.classList.add('correct');
+            score++;
+            document.getElementById('score-text').innerText = `得分: ${score}`;
+        } else {
+            btn.classList.add('wrong');
+            buttons.forEach(b => {
+                if (b.innerText === correctOpt) {
+                    b.classList.add('correct');
+                }
+            });
+        }
+    }
+
+    function prevQuestion() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            renderQuestion();
+        }
+    }
+
+    function nextQuestion() {
+        if (currentIndex < totalQuestions - 1) {
+            currentIndex++;
+            renderQuestion();
+        } else {
+            endGame();
+        }
+    }
+
+    function endGame() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.add('active');
+        document.getElementById('final-score').innerText = `${score}/${totalQuestions}`;
+        
+        let msg = "";
+        if (score === totalQuestions) msg = "完美！你完全掌握了这些单词！🏆";
+        else if (score >= totalQuestions * 0.8) msg = "非常棒！继续保持！🌟";
+        else if (score >= totalQuestions * 0.6) msg = "还不错，但还有进步空间哦！💪";
+        else msg = "需要多加复习啦，加油！📚";
+        document.getElementById('result-message').innerText = msg;
+    }
+</script>
+</body>
+</html>
